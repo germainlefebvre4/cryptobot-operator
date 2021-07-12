@@ -1,0 +1,20 @@
+apiVersion: "cryptobot.com/v1"
+kind: Bot
+metadata:
+  name: jean-btceur
+spec:
+  binance_api_url: "https://api.binance.com"
+  binance_api_key: ""
+  binance_api_secret: ""
+  binance_config_base_currency: "BTC"
+  binance_config_quote_currency: "EUR"
+  binance_config_granularity: "15m"
+  binance_config_live: 0
+  binance_config_verbose: 1
+  binance_config_graphs: 0
+  binance_config_buymaxsize: 0.001
+  binance_config_sellupperpcnt: 5
+  binance_config_selllowerpcnt: -2
+  logger_consoleloglevel: "INFO"
+  telegram_client_id: ""
+  telegram_token: ""

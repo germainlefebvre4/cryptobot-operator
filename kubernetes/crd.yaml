@@ -1,0 +1,93 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: bots.cryptobot.com
+spec:
+  group: cryptobot.com
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                binance_api_url:
+                  type: string
+                binance_api_key:
+                  type: string
+                binance_api_secret:
+                  type: string
+                binance_config_base_currency:
+                  type: string
+                binance_config_quote_currency:
+                  type: string
+                binance_config_granularity:
+                  type: string
+                binance_config_live:
+                  type: number
+                  format: integer
+                binance_config_verbose:
+                  type: number
+                  format: integer
+                binance_config_graphs:
+                  type: number
+                  format: integer
+                binance_config_buymaxsize:
+                  type: number
+                  format: float
+                binance_config_sellupperpcnt:
+                  type: number
+                  format: float
+                binance_config_selllowerpcnt:
+                  type: number
+                  format: float
+                binance_config_disablebullonly:
+                  type: number
+                  format: integer
+                binance_config_disablebuynearhigh:
+                  type: number
+                  format: integer
+                binance_config_disablebuymacd:
+                  type: number
+                  format: integer
+                binance_config_disablebuyema:
+                  type: number
+                  format: integer
+                binance_config_disablebuyobv:
+                  type: number
+                  format: integer
+                binance_config_disablebuyelderray:
+                  type: number
+                  format: integer
+                binance_config_disablefailsafefibonaccilow:
+                  type: number
+                  format: integer
+                binance_config_disablefailsafelowerpcnt:
+                  type: number
+                  format: integer
+                binance_config_disableprofitbankupperpcnt:
+                  type: number
+                  format: integer
+                binance_config_disableprofitbankfibonaccihigh:
+                  type: number
+                  format: integer
+                binance_config_disableprofitbankreversal:
+                  type: number
+                  format: integer
+                logger_consoleloglevel:
+                  type: string
+                telegram_client_id:
+                  type: string
+                telegram_token:
+                  type: string
+  scope: Namespaced
+  names:
+    plural: bots
+    singular: bot
+    kind: Bot
+    shortNames:
+      - bot
