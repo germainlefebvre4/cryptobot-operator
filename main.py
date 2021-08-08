@@ -3,6 +3,7 @@ import kubernetes
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 import json
+from base64 import b64encode
 
 def create_configmap(
     name = None,
@@ -70,6 +71,72 @@ def delete_configmap(
         print("Exception when calling CoreV1Api->remove_namespaced_config_map: %s\n" % e)
 
 
+def create_secret(
+    name = None,
+    namespace = None,
+    data = None,
+) -> None:
+    api = client.CoreV1Api()
+    secret = client.V1Secret(
+        api_version = "v1",
+        kind = "Secret",
+        data = data,
+        metadata = client.V1ObjectMeta(
+            name = name,
+            namespace = namespace,
+        )
+    )
+
+    try:
+        api_response = api.create_namespaced_secret(
+            namespace = namespace,
+            body = secret,
+        )
+    except ApiException as e:
+        print("Exception when calling CoreV1Api->create_namespaced_secret: %s\n" % e)
+
+
+def update_secret(
+    name = None,
+    namespace = None,
+    data = None,
+) -> None:
+    api = client.CoreV1Api()
+    secret = client.V1ConfigMap(
+        api_version = "v1",
+        kind = "Secret",
+        data = data,
+        metadata = client.V1ObjectMeta(
+            name = name,
+            namespace = namespace,
+        )
+    )
+
+    try:
+        api_response = api.patch_namespaced_secret(
+            name = name,
+            namespace = namespace,
+            body = secret,
+        )
+    except ApiException as e:
+        print("Exception when calling CoreV1Api->patch_namespaced_secret: %s\n" % e)
+
+
+def delete_secret(
+    name = None,
+    namespace = None,
+    data = None,
+) -> None:
+    api = client.CoreV1Api()
+    try:
+        api_response = api.delete_namespaced_secret(
+            name = name,
+            namespace = namespace
+        )
+    except ApiException as e:
+        print("Exception when calling CoreV1Api->remove_namespaced_secret: %s\n" % e)
+
+
 def create_deployment(
     name = None,
     namespace = None,
@@ -98,7 +165,7 @@ def create_deployment(
                 "spec": {
                     "containers": [{
                         "name": 'cryptobot',
-                        "image": "germainlefebvre4/pycryptobot:latest",
+                        "image": "germainlefebvre4/pycryptobot:v3.2.2",
                         "env": [{
                             "name": "PYTHONUNBUFFERED",
                             "value": "1",
@@ -106,18 +173,36 @@ def create_deployment(
                         "ports": [{
                             "containerPort": 80,
                         }],
-                        "volumeMounts": [{
-                            "name": "config-volume",
-                            "mountPath": "/app/config.json",
-                            "subPath": "config.json",
-                        }],
+                        "volumeMounts": [
+                            {
+                                "name": "config",
+                                "mountPath": "/app/config.json",
+                                "subPath": "config.json",
+                            },
+                            {
+                                "name": "api-keys",
+                                "mountPath": "/app/keys",
+                                "readOnly": True,
+                            },
+                        ],
                     }],
-                    "volumes": [{
-                        "name": "config-volume",
-                        "configMap": {
-                            "name": f'{name}',
+                    "volumes": [
+                        {
+                            "name": "config",
+                            "configMap": {
+                                "name": f'{name}',
+                            },
                         },
-                    }],
+                        {
+                            "name": "api-keys",
+                            "secretName": {
+                                "name": f'{name}',
+                                "items": [
+                                    {"key": "binance.key"},
+                                ],
+                            },
+                        }
+                    ],
                 },
             },
         }
@@ -160,7 +245,7 @@ def update_deployment(
                 "spec": {
                     "containers": [{
                         "name": 'cryptobot',
-                        "image": "germainlefebvre4/pycryptobot:latest",
+                        "image": "germainlefebvre4/pycryptobot:v3.2.2",
                         "env": [{
                             "name": "PYTHONUNBUFFERED",
                             "value": "1",
@@ -168,21 +253,39 @@ def update_deployment(
                         "ports": [{
                             "containerPort": 80,
                         }],
-                        "volumeMounts": [{
-                            "name": "config-volume",
-                            "mountPath": "/app/config.json",
-                            "subPath": "config.json",
-                        }],
+                        "volumeMounts": [
+                            {
+                                "name": "config",
+                                "mountPath": "/app/config.json",
+                                "subPath": "config.json",
+                            },
+                            {
+                                "name": "api-keys",
+                                "mountPath": "/app/keys",
+                                "readOnly": True,
+                            },
+                        ],
                     }],
-                    "volumes": [{
-                        "name": "config-volume",
-                        "configMap": {
-                            "name": f'{name}',
+                    "volumes": [
+                        {
+                            "name": "config",
+                            "configMap": {
+                                "name": f'{name}',
+                            },
                         },
-                    }],
+                        {
+                            "name": "api-keys",
+                            "secretName": {
+                                "name": f'{name}',
+                                "items": [
+                                    {"key": "binance.key"},
+                                ],
+                            },
+                        }
+                    ],
                 },
             },
-        }
+        },
     )
 
     try:
@@ -201,7 +304,6 @@ def delete_deployment(
     app = None,
 ) -> None:
     api = client.AppsV1Api()
-    # name = f'{customer}-{currency}'
     try:
         api_response = api.delete_namespaced_deployment(
             name = name,
@@ -242,8 +344,7 @@ def create_configmap_data(
     configmap = {
         "binance": {
             "api_url": f'{binance_api_url}',
-            "api_key": f'{binance_api_key}',
-            "api_secret": f'{binance_api_secret}',
+            "api_key_file" : "/app/keys/binance.key",
             "config": {
                 "base_currency": f'{binance_config_base_currency}',
                 "quote_currency": f'{binance_config_quote_currency}',
@@ -283,10 +384,21 @@ def create_configmap_data(
     return {"config.json": json.dumps(configmap, indent=4)}
 
 
+def create_secret_data(
+    binance_api_key = None,
+    binance_api_secret = None,
+):
+    secret = b64encode(f'{binance_api_key}\n{binance_api_secret}'.encode("ascii")).decode("ascii")
+
+    return {"binance.key": f"{secret}"}
+
+
 @kopf.on.create('bots')
 def create_bot(spec, name, namespace, logger, **kwargs):
     configmap_data = create_configmap_data(**spec)
+    secret_data = create_secret_data(spec.get("binance_api_key"), spec.get("binance_api_secret"))
 
+    create_secret(name=name, namespace="cryptobot", data=secret_data)
     create_configmap(name=name, namespace="cryptobot", data=configmap_data)
     create_deployment(name=name, namespace="cryptobot")
 
@@ -294,11 +406,15 @@ def create_bot(spec, name, namespace, logger, **kwargs):
 @kopf.on.update('bots')
 def update_bot(spec, name, namespace, logger, **kwargs):
     configmap_data = create_configmap_data(**spec)
+    secret_data = create_secret_data(spec.get("binance_api_key"), spec.get("binance_api_secret"))
+
+    update_secret(name=name, namespace="cryptobot", data=secret_data)
     update_configmap(name=name, namespace="cryptobot", data=configmap_data)
     update_deployment(name=name, namespace="cryptobot")
 
 
 @kopf.on.delete('bots')
 def delete_bot(spec, name, namespace, logger, **kwargs):
+    delete_secret(name=name, namespace="cryptobot")
     delete_deployment(name=name, namespace="cryptobot")
     delete_configmap(name=name, namespace="cryptobot")
