@@ -4,6 +4,19 @@ from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 import json
 from base64 import b64encode
+import os
+
+
+if not os.getenv('CRYPTOBOT_VERSION') or not os.getenv('CRYPTOBOT_VERSION').startswith('v'):
+    print("CRYPTOBOT_VERSION is not set or not a valid version")
+    exit(1)
+
+
+if os.getenv('DOCKER_IMAGE_PULL_POLICY') in ["IfNotPresent", "Always"]:
+    pass
+else:
+    os.environ["DOCKER_IMAGE_PULL_POLICY"] = "IfNotPresent"
+
 
 def create_configmap(
     name = None,
@@ -165,7 +178,8 @@ def create_deployment(
                 "spec": {
                     "containers": [{
                         "name": 'cryptobot',
-                        "image": "germainlefebvre4/pycryptobot:v3.2.2",
+                        "image": f"germainlefebvre4/pycryptobot:{os.getenv('CRYPTOBOT_VERSION')}",
+                        "imagePullPolicy": f"{os.getenv('DOCKER_IMAGE_PULL_POLICY')}",
                         "env": [{
                             "name": "PYTHONUNBUFFERED",
                             "value": "1",
@@ -242,7 +256,8 @@ def update_deployment(
                 "spec": {
                     "containers": [{
                         "name": 'cryptobot',
-                        "image": "germainlefebvre4/pycryptobot:v3.2.2",
+                        "image": f"germainlefebvre4/pycryptobot:{os.getenv('CRYPTOBOT_VERSION')}",
+                        "imagePullPolicy": f"{os.getenv('DOCKER_IMAGE_PULL_POLICY')}",
                         "env": [{
                             "name": "PYTHONUNBUFFERED",
                             "value": "1",
