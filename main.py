@@ -195,11 +195,8 @@ def create_deployment(
                         },
                         {
                             "name": "api-keys",
-                            "secretName": {
-                                "name": f'{name}',
-                                "items": [
-                                    {"key": "binance.key"},
-                                ],
+                            "secret": {
+                                "secretName": f'{name}',
                             },
                         }
                     ],
