@@ -396,6 +396,29 @@ def create_configmap_data(
     return {"config.json": json.dumps(configmap, indent=4)}
 
 
+def restart_deployment(
+    name = None,
+    namespace = None,
+):
+    api = client.AppsV1Api()
+    try:
+        api_response = api.patch_namespaced_deployment_scale(
+            name = name,
+            namespace = namespace,
+            body={"spec": {"replicas": 0}}
+        )
+    except ApiException as e:
+        print("Exception when calling AppsV1Api->patch_namespaced_deployment_scale->0: %s\n" % e)
+    try:
+        api_response = api.patch_namespaced_deployment_scale(
+            name = name,
+            namespace = namespace,
+            body={"spec": {"replicas": 1}}
+        )
+    except ApiException as e:
+        print("Exception when calling AppsV1Api->patch_namespaced_deployment_scale->1: %s\n" % e)
+
+
 def create_secret_data(
     binance_api_key = None,
     binance_api_secret = None,
@@ -423,6 +446,7 @@ def update_bot(spec, name, namespace, logger, **kwargs):
     update_secret(name=name, namespace="cryptobot", data=secret_data)
     update_configmap(name=name, namespace="cryptobot", data=configmap_data)
     update_deployment(name=name, namespace="cryptobot")
+    restart_deployment(name=name, namespace="cryptobot")
 
 
 @kopf.on.delete('bots')
