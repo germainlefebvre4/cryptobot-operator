@@ -187,6 +187,16 @@ def create_deployment(
                         "ports": [{
                             "containerPort": 80,
                         }],
+                        "resources": {
+                            "requests": {
+                                "cpu": "10m",
+                                "memory": "16Mi",
+                            },
+                            "limits": {
+                                "cpu": "1",
+                                "memory": "512Mi",
+                            },
+                        },
                         "volumeMounts": [
                             {
                                 "name": "config",
@@ -265,6 +275,16 @@ def update_deployment(
                         "ports": [{
                             "containerPort": 80,
                         }],
+                        "resources": {
+                            "requests": {
+                                "cpu": "10m",
+                                "memory": "16Mi",
+                            },
+                            "limits": {
+                                "cpu": "1",
+                                "memory": "512Mi",
+                            },
+                        },
                         "volumeMounts": [
                             {
                                 "name": "config",
